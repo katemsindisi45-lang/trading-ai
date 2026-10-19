@@ -1,0 +1,132 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && incoming().userId == userId
+        && incoming().email is string && incoming().email.size() <= 256
+        && incoming().keys().hasAll(['userId', 'email'])
+        && incoming().keys().hasOnly(['userId', 'email', 'displayName', 'defaultSymbol', 'defaultTimeframe', 'updatedAt']);
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && incoming().userId == existing().userId
+        && incoming().email == existing().email
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'defaultSymbol', 'defaultTimeframe', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /watchlists/{symbol} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && isValidId(symbol)
+          && incoming().userId == userId
+          && incoming().symbol is string && incoming().symbol.size() <= 32
+          && incoming().keys().hasAll(['symbol', 'userId'])
+          && incoming().keys().hasOnly(['symbol', 'notes', 'userId', 'createdAt']);
+        allow update: if isOwner(userId)
+          && isValidId(symbol)
+          && incoming().userId == existing().userId
+          && incoming().symbol == existing().symbol
+          && incoming().diff(existing()).affectedKeys().hasOnly(['notes', 'createdAt']);
+        allow delete: if isOwner(userId) && isValidId(symbol);
+      }
+
+      match /alerts/{alertId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && isValidId(alertId)
+          && incoming().userId == userId
+          && incoming().symbol is string && incoming().symbol.size() <= 32
+          && incoming().metric is string && incoming().metric.size() <= 64
+          && incoming().targetValue is number
+          && incoming().keys().hasAll(['id', 'userId', 'symbol', 'metric', 'condition', 'targetValue', 'status'])
+          && incoming().keys().hasOnly(['id', 'userId', 'symbol', 'metric', 'condition', 'targetValue', 'status', 'createdAt']);
+        allow update: if isOwner(userId)
+          && isValidId(alertId)
+          && incoming().userId == existing().userId
+          && incoming().id == existing().id
+          && incoming().diff(existing()).affectedKeys().hasOnly(['condition', 'targetValue', 'status']);
+        allow delete: if isOwner(userId) && isValidId(alertId);
+      }
+
+      match /scanner_presets/{presetId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && isValidId(presetId)
+          && incoming().userId == userId
+          && incoming().name is string && incoming().name.size() <= 64
+          && incoming().keys().hasAll(['id', 'userId', 'name'])
+          && incoming().keys().hasOnly(['id', 'userId', 'name', 'trendFilter', 'minCvd', 'minVolume', 'createdAt']);
+        allow update: if isOwner(userId)
+          && isValidId(presetId)
+          && incoming().userId == existing().userId
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'trendFilter', 'minCvd', 'minVolume', 'createdAt']);
+        allow delete: if isOwner(userId) && isValidId(presetId);
+      }
+
+      match /analyses/{analysisId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && isValidId(analysisId)
+          && incoming().userId == userId
+          && incoming().asset is string && incoming().asset.size() <= 32
+          && incoming().regime is string && incoming().regime.size() <= 64
+          && incoming().summary is string && incoming().summary.size() <= 2000
+          && incoming().keys().hasAll(['id', 'userId', 'asset', 'regime', 'summary'])
+          && incoming().keys().hasOnly(['id', 'userId', 'asset', 'regime', 'summary', 'timestamp']);
+        allow update: if isOwner(userId)
+          && isValidId(analysisId)
+          && incoming().userId == existing().userId
+          && incoming().diff(existing()).affectedKeys().hasOnly(['summary', 'timestamp']);
+        allow delete: if isOwner(userId) && isValidId(analysisId);
+      }
+
+      match /trades/{tradeId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && isValidId(tradeId)
+          && incoming().userId == userId
+          && incoming().symbol is string && incoming().symbol.size() <= 32
+          && incoming().side in ['BUY', 'SELL']
+          && incoming().entryPrice is number
+          && incoming().stopLoss is number
+          && incoming().takeProfit is number
+          && incoming().status in ['WIN', 'LOSS', 'OPEN', 'BREAK_EVEN']
+          && incoming().date is string
+          && incoming().keys().hasAll(['id', 'userId', 'symbol', 'side', 'entryPrice', 'stopLoss', 'takeProfit', 'status', 'date']);
+        allow update: if isOwner(userId)
+          && isValidId(tradeId)
+          && incoming().userId == existing().userId
+          && incoming().id == existing().id;
+        allow delete: if isOwner(userId) && isValidId(tradeId);
+      }
+    }
+  }
+}

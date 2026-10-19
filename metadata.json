@@ -1,0 +1,10 @@
+{
+  "name": "CryExc — Crypto Intelligence & Order Flow",
+  "description": "Institutional-grade cryptocurrency market intelligence, order-flow footprint analysis, liquidity heatmaps, gamma exposure, and AI market synthesis.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

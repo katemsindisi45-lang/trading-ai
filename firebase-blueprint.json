@@ -1,0 +1,128 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and terminal preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "defaultSymbol": { "type": "string", "maxLength": 32 },
+        "defaultTimeframe": { "type": "string", "maxLength": 16 },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "email"]
+    },
+    "WatchlistItem": {
+      "title": "WatchlistItem",
+      "description": "A cryptocurrency saved to the user's watchlist",
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string", "maxLength": 32 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["symbol", "userId"]
+    },
+    "PriceAlert": {
+      "title": "PriceAlert",
+      "description": "User configured real-time market or order-flow alert",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "symbol": { "type": "string", "maxLength": 32 },
+        "metric": { "type": "string", "maxLength": 64 },
+        "condition": { "type": "string", "maxLength": 32 },
+        "targetValue": { "type": "number" },
+        "status": { "type": "string", "enum": ["ACTIVE", "TRIGGERED", "MUTED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "symbol", "metric", "condition", "targetValue", "status"]
+    },
+    "ScannerPreset": {
+      "title": "ScannerPreset",
+      "description": "Saved market scanner query preset",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 64 },
+        "trendFilter": { "type": "string", "maxLength": 32 },
+        "minCvd": { "type": "number" },
+        "minVolume": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "name"]
+    },
+    "AnalysisRecord": {
+      "title": "AnalysisRecord",
+      "description": "Historical AI market analysis archive",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "asset": { "type": "string", "maxLength": 32 },
+        "regime": { "type": "string", "maxLength": 64 },
+        "summary": { "type": "string", "maxLength": 2000 },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "userId", "asset", "regime", "summary"]
+    },
+    "TradeRecord": {
+      "title": "TradeRecord",
+      "description": "User trade record with win/lose stats, everyday performance, and R-multiples",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "symbol": { "type": "string", "maxLength": 32 },
+        "side": { "type": "string", "enum": ["BUY", "SELL"] },
+        "entryPrice": { "type": "number" },
+        "exitPrice": { "type": "number" },
+        "stopLoss": { "type": "number" },
+        "takeProfit": { "type": "number" },
+        "riskRewardRatio": { "type": "string", "maxLength": 32 },
+        "riskAmountUsd": { "type": "number" },
+        "pnlUsd": { "type": "number" },
+        "pnlR": { "type": "number" },
+        "status": { "type": "string", "enum": ["WIN", "LOSS", "OPEN", "BREAK_EVEN"] },
+        "date": { "type": "string", "maxLength": 32 },
+        "openedAt": { "type": "string", "maxLength": 64 },
+        "closedAt": { "type": "string", "maxLength": 64 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "setupSource": { "type": "string", "maxLength": 64 },
+        "exitReason": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "symbol", "side", "entryPrice", "stopLoss", "takeProfit", "status", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private profile and terminal preferences"
+    },
+    "/users/{userId}/watchlists/{symbol}": {
+      "schema": "WatchlistItem",
+      "description": "User's private saved watchlist symbols"
+    },
+    "/users/{userId}/alerts/{alertId}": {
+      "schema": "PriceAlert",
+      "description": "User's private price and order-flow alerts"
+    },
+    "/users/{userId}/scanner_presets/{presetId}": {
+      "schema": "ScannerPreset",
+      "description": "User's private scanner presets"
+    },
+    "/users/{userId}/analyses/{analysisId}": {
+      "schema": "AnalysisRecord",
+      "description": "User's private saved analysis history"
+    },
+    "/users/{userId}/trades/{tradeId}": {
+      "schema": "TradeRecord",
+      "description": "User's trade journal and historical win/loss tracking"
+    }
+  }
+}
